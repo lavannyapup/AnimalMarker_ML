@@ -6,7 +6,7 @@
 
     <!-- TensorFlow.js + Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
 
     <style>
       body {
@@ -48,5 +48,93 @@
         position: fixed;
         top: 10px;
         left: 50%;
-        trans
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 3;
+      }
+    </style>
+  </head>
 
+  <body>
+    <div id="status">Loading model…</div>
+    <div id="webcam-container"></div>
+
+    <!-- The AR cat image -->
+    <img id="cat-overlay" src="cat/Sneezy.png" alt="Sneezy Cat" />
+
+    <script>
+      // Teachable Machine model link
+      const URL = "https://teachablemachine.withgoogle.com/models/Y0VAiPKTu/";
+
+      let model, webcam, maxPredictions;
+
+      async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        try {
+          model = await tmImage.load(modelURL, metadataURL);
+          maxPredictions = model.getTotalClasses();
+        } catch (err) {
+          console.error("Model load failed:", err);
+          document.getElementById("status").innerText = "❌ Failed to load model";
+          return;
+        }
+
+        // Webcam setup
+        webcam = new tmImage.Webcam(window.innerWidth, window.innerHeight, true);
+        try {
+          await webcam.setup({ facingMode: "environment" }); // back camera if available
+        } catch (err) {
+          console.error("Webcam setup failed:", err);
+          document.getElementById("status").innerText = "❌ Failed to access camera";
+          return;
+        }
+
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        // Attach webcam canvas
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        document.getElementById("status").innerText = "Point at Sneezy 🐾";
+      }
+
+      async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+      }
+
+      async function predict() {
+        let prediction;
+        try {
+          prediction = await model.predict(webcam.canvas);
+        } catch (err) {
+          console.error("Prediction error:", err);
+          document.getElementById("status").innerText = "❌ Prediction error";
+          return;
+        }
+
+        const top = prediction.reduce((a, b) =>
+          a.probability > b.probability ? a : b
+        );
+
+        const overlay = document.getElementById("cat-overlay");
+        if (top.className === "Sneezy" && top.probability > 0.85) {
+          overlay.style.display = "block";
+          document.getElementById("status").innerText =
+            "✅ Detected Sneezy! 🐾";
+        } else {
+          overlay.style.display = "none";
+          document.getElementById("status").innerText = "Looking...";
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
