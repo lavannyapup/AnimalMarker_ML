@@ -6,7 +6,7 @@
 
     <!-- TensorFlow.js + Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <style>
       body {
@@ -98,7 +98,6 @@
         await webcam.play();
         window.requestAnimationFrame(loop);
 
-        // Attach webcam canvas
         document.getElementById("webcam-container").appendChild(webcam.canvas);
         document.getElementById("status").innerText = "Point at Sneezy 🐾";
       }
@@ -138,3 +137,4 @@
     </script>
   </body>
 </html>
+
