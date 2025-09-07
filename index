@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Sneezy Cat AR</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: sans-serif;
+      }
+
+      #webcam-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover;
+        z-index: 1;
+      }
+
+      /* The AR cat overlay (hidden until detected) */
+      #cat-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        display: none;
+        z-index: 2;
+      }
+
+      #status {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status">Loading model…</div>
+    <div id="webcam-container"></div>
+
+    <!-- The AR cat image -->
+    <img id="cat-overlay" src="assets/Sneezy.png" alt="Sneezy Cat" />
+
+    <script>
+      // Teachable Machine model link
+      const URL = "https://teachablemachine.withgoogle.com/models/[...]";
+
+      let model, webcam, maxPredictions;
+
+      async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Bigger webcam feed → clearer + uses back camera if possible
+        webcam = new tmImage.Webcam(window.innerWidth, window.innerHeight, true);
+        await webcam.setup({ facingMode: "environment" });
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        document.getElementById("status").innerText = "Point at Sneezy 🐾";
+      }
+
+      async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+      }
+
+      async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        const top = prediction.reduce((a, b) =>
+          a.probability > b.probability ? a : b
+        );
+
+        const overlay = document.getElementById("cat-overlay");
+        if (top.className === "Sneezy" && top.probability > 0.85) {
+          overlay.style.display = "block";
+          document.getElementById("status").innerText = "Detected Sneezy! 🐾";
+        } else {
+          overlay.style.display = "none";
+          document.getElementById("status").innerText = "Looking...";
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
