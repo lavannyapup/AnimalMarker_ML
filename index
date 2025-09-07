@@ -60,7 +60,7 @@
     <div id="webcam-container"></div>
 
     <!-- The AR cat image -->
-    <img id="cat-overlay" src="assets/Sneezy.png" alt="Sneezy Cat" />
+    <img id="cat-overlay" src="cat/Sneezy.png" alt="Sneezy Cat" />
 
     <script>
       // Teachable Machine model link
